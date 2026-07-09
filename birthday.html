@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Happy Birthday Thangoom.!</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Three.js, GSAP & Canvas-Confetti CDNs -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            serif: ['"Playfair Display"', 'serif'],
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Global Styles */
+    body {
+      background-color: #0c0a09;
+      color: #f5f5f4;
+      overflow-x: hidden;
+      margin: 0;
+    }
+
+    /* Animated Aurora Background Layer */
+    .aurora-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -20;
+      background: #0c0a09;
+      overflow: hidden;
+    }
+
+    .aurora-layer {
+      position: absolute;
+      width: 160%;
+      height: 160%;
+      top: -30%;
+      left: -30%;
+      background-image: 
+        radial-gradient(circle at 20% 30%, hsla(333, 70%, 55%, 0.3) 0%, transparent 50%),
+        radial-gradient(circle at 80% 70%, hsla(282, 82%, 54%, 0.25) 0%, transparent 50%),
+        radial-gradient(circle at 40% 80%, hsla(210, 89%, 60%, 0.25) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, hsla(35, 90%, 60%, 0.2) 0%, transparent 50%);
+      filter: blur(80px);
+      animation: aurora-flow 30s infinite alternate ease-in-out;
+    }
+
+    @keyframes aurora-flow {
+      0% {
+        transform: rotate(0deg) scale(1) translate(0px, 0px);
+      }
+      50% {
+        transform: rotate(8deg) scale(1.1) translate(20px, -30px);
+      }
+      100% {
+        transform: rotate(-8deg) scale(0.95) translate(-20px, 30px);
+      }
+    }
+
+    /* Glassmorphic Cards Styling */
+    .glass-card {
+      background: rgba(12, 10, 9, 0.45);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+    }
+
+    /* Gradient Typography Setup */
+    .text-gradient {
+      background: linear-gradient(135deg, #ffffff 30%, #f472b6 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* Custom Interactive Pill Buttons */
+    .glow-btn {
+      position: relative;
+      background: linear-gradient(135deg, #ec4899 0%, #f43f5e 100%);
+      box-shadow: 0 4px 20px rgba(236, 72, 153, 0.35);
+      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+
+    .glow-btn::before {
+      content: '';
+      position: absolute;
+      inset: -3px;
+      border-radius: 9999px;
+      background: linear-gradient(135deg, #ec4899, #f43f5e);
+      z-index: -1;
+      opacity: 0;
+      filter: blur(8px);
+      transition: opacity 0.3s ease;
+    }
+
+    .glow-btn:hover {
+      transform: translateY(-2px) scale(1.04);
+      box-shadow: 0 10px 25px rgba(236, 72, 153, 0.55);
+    }
+
+    .glow-btn:hover::before {
+      opacity: 1;
+    }
+
+    .glow-btn:active {
+      transform: translateY(1px) scale(0.98);
+    }
+
+    /* 3D Polaroid Hover Support */
+    .perspective-1000 {
+      perspective: 1000px;
+    }
+
+    /* Smooth Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0c0a09;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #292524;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body class="font-sans min-h-screen flex flex-col justify-between relative overflow-x-hidden select-none">
+
+  <!-- Interactive Background Canvas (Three.js) -->
+  <canvas id="canvas3d" class="fixed top-0 left-0 w-full h-full -z-10 pointer-events-none"></canvas>
+
+  <!-- Aurora Base Gradient Layer -->
+  <div class="aurora-bg">
+    <div class="aurora-layer"></div>
+  </div>
+
+  <!-- Progress Bar Container -->
+  <div class="fixed top-6 left-1/2 transform -translate-x-1/2 w-11/12 max-w-md h-1.5 bg-white/5 rounded-full z-50 overflow-hidden border border-white/5">
+    <div id="progress-bar" class="h-full bg-gradient-to-r from-pink-500 to-rose-500 w-0 rounded-full transition-all duration-300"></div>
+  </div>
+
+  <!-- Central Greeting Container -->
+  <main class="flex-grow flex items-center justify-center px-4 py-20 z-10">
+    <div class="relative w-full max-w-xl min-h-[480px] flex items-center justify-center">
+
+      <!-- STEP 1: Grand Welcome -->
+      <div id="step-1" class="step-card w-full glass-card rounded-3xl p-8 md:p-12 text-center flex flex-col items-center justify-between opacity-0 pointer-events-none absolute">
+        <div class="flex flex-col items-center gap-6">
+          <div class="text-6xl animate-bounce duration-1000 select-none">❤️</div>
+          <h1 class="font-serif text-4xl md:text-5xl font-bold tracking-tight text-gradient">Hey Beautiful,</h1>
+          <p class="text-stone-300 text-base md:text-lg leading-relaxed max-w-md">
+            I built a little world for you, just to bring a smile to your face on your special day.
+          </p>
+        </div>
+        <button onclick="nextStep()" class="glow-btn mt-8 px-8 py-3.5 text-white font-medium rounded-full tracking-wide">
+          Let's Begin
+        </button>
+      </div>
+
+      <!-- STEP 2: The Core Message -->
+      <div id="step-2" class="step-card w-full glass-card rounded-3xl p-8 md:p-12 text-center flex flex-col items-center justify-between opacity-0 pointer-events-none absolute hidden">
+        <div class="flex flex-col items-center gap-6">
+          <div class="text-6xl select-none animate-pulse">🎉</div>
+          <h2 class="font-serif text-4xl md:text-5xl font-bold tracking-tight text-gradient animate-stagger">Happy Birthday!</h2>
+          <p class="text-stone-300 text-base md:text-lg leading-relaxed max-w-md animate-stagger">
+             Naatha unnoda Domarr..! Ena neyapagam irukanu thiriyala. Paravala thangooom..! Inaku Unnoda Birthday HAPPY BIRTHDAY FOR MY PONDATIII..! Happy birthday Thangoom 🎊🎉. Life Long Yepaum nee happy ya irukanu daa. Enoda support yepaum unaku irukum thangoom. 
+          </p>
+        </div>
+        <button onclick="nextStep()" class="glow-btn mt-8 px-8 py-3.5 text-white font-medium rounded-full tracking-wide animate-stagger">
+          There's more...
+        </button>
+      </div>
+
+      <!-- STEP 3: The Reasons Why (Bento Grid) -->
+      <div id="step-3" class="step-card w-full glass-card rounded-3xl p-6 md:p-10 text-center flex flex-col items-center justify-between opacity-0 pointer-events-none absolute hidden">
+        <div class="w-full flex flex-col items-center">
+          <h2 class="font-serif text-3xl md:text-4xl font-bold tracking-tight text-gradient mb-6 animate-stagger">A Few Things I Adore About You</h2>
+          
+          <!-- Bento Grid -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-left w-full my-4">
+            <!-- Card 1 (Span 2) -->
+            <div class="md:col-span-2 bg-white/5 border border-white/10 rounded-2xl p-4 md:p-5 hover:border-pink-500/30 transition-colors duration-300 animate-stagger">
+              <h3 class="font-serif text-lg text-pink-300 font-semibold mb-1">✨ Haii Thangooom 👋</h3>
+              <p class="text-stone-300 text-sm leading-relaxed">Unnaku Onnu Thiriuma Second Varakum Naa Feel Pannurathu Onne Onnutha Thangoom Naa Irukura Varakum Unkuda Oru Normal Life Valanumnu. & Unna Naa Yean Chinna Vayasulaye Meet Pannalanmu Sathiyam Rombaaa Varutham Pannuran Thangoom.</p>
+            </div>
+            <!-- Card 2 -->
+            <div class="bg-white/5 border border-white/10 rounded-2xl p-4 md:p-5 hover:border-pink-500/30 transition-colors duration-300 animate-stagger">
+              <h3 class="font-serif text-lg text-pink-300 font-semibold mb-1">😊 That Smile</h3>
+              <p class="text-stone-300 text-sm leading-relaxed">Anaa Thangoom Epo Varakum Unna Yennoda Uyir Vidaa Romba Rombaa Love Pannuran Thangoom. Ithu Yean Mela Sathiyama Solluran Thangooooom.
+ I LOVE YOU THANGOOM..</p>
+            </div>
+            <!-- Card 3 -->
+            <div class="bg-white/5 border border-white/10 rounded-2xl p-4 md:p-5 hover:border-pink-500/30 transition-colors duration-300 animate-stagger">
+              <h3 class="font-serif text-lg text-pink-300 font-semibold mb-1">🫂 i'm Here For You</h3>
+              <p class="text-stone-300 text-sm leading-relaxed">Unna Naa Yennakum Miss Panna Kudathunu Irukan Thangoom..! Family-la Finance-la Problem Naa Unkuda Irukan Thangoom 2 Perum Senthu Pathukalam Thangoom. MANY MORE HAPPIEST BIRTHDAY FOR TODAY🎂🎉🎈. Naa Pesuna & Close ahna First & last Ponnu Neetha Thangoom I🤍U.</p>
+            </div>
+          </div>
+        </div>
+        <button onclick="nextStep()" class="glow-btn mt-6 px-8 py-3.5 text-white font-medium rounded-full tracking-wide animate-stagger">
+          Remember this?
+        </button>
+      </div>
+
+      <!-- STEP 4: The Shared Memory -->
+      <div id="step-4" class="step-card w-full glass-card rounded-3xl p-8 md:p-10 text-center flex flex-col items-center justify-between opacity-0 pointer-events-none absolute hidden">
+        <div class="flex flex-col items-center w-full">
+          <h2 class="font-serif text-3xl md:text-4xl font-bold tracking-tight text-gradient mb-4 animate-stagger">That One Time...</h2>
+          
+          <!-- Interactive Polaroid -->
+          <div class="perspective-1000 my-4 w-full max-w-[240px] animate-stagger">
+            <div id="polaroid" class="bg-stone-50 p-3 pb-5 shadow-2xl border border-stone-200 transform -rotate-3 transition-transform duration-200 ease-out cursor-default">
+              <div class="overflow-hidden bg-stone-200 aspect-square rounded mb-3">
+                <img src="https://img.sanishtech.com/u/a0e27154d8a2475a876c757016bc4472.png" alt="Our favorite memory" class="w-full h-full object-cover">
+              </div>
+              <p class="font-serif text-stone-800 text-base md:text-lg tracking-wide">My favorite memory.</p>
+            </div>
+          </div>
+
+          <p class="text-stone-300 text-sm md:text-base leading-relaxed max-w-md mt-4 animate-stagger">
+            Every moment with you feels like a scene from a movie I'd watch on repeat.
+          </p>
+        </div>
+        <button onclick="nextStep()" class="glow-btn mt-6 px-8 py-3.5 text-white font-medium rounded-full tracking-wide animate-stagger">
+          One last thing...
+        </button>
+      </div>
+
+      <!-- STEP 5: The Birthday Wish & Finale -->
+      <div id="step-5" class="step-card w-full glass-card rounded-3xl p-8 md:p-12 text-center flex flex-col items-center justify-between opacity-0 pointer-events-none absolute hidden">
+        <div class="flex flex-col items-center gap-6">
+          <div class="text-6xl animate-bounce duration-1000 select-none">🎂</div>
+          <h2 class="font-serif text-4xl md:text-5xl font-bold tracking-tight text-gradient animate-stagger">My Wish For You</h2>
+          <p class="text-stone-300 text-base md:text-lg leading-relaxed max-w-md animate-stagger">
+            Kadasiya onne onnu solluran thangoom yaru iruthalum illa naalum naa unnaku yepaume iruppan oru nalla life partner aah Trust me.
+          </p>
+          
+          <!-- Finale Hidden Area -->
+          <div id="final-message" class="hidden opacity-0 scale-95 transition-all duration-700 mt-4">
+            <h2 class="font-serif text-2xl md:text-3xl font-bold text-gradient bg-gradient-to-r from-pink-400 to-rose-400">
+              Happy Birthday to, thangooooom! 🤍
+            </h2>
+          </div>
+        </div>
+
+        <button id="celebrate-btn" onclick="celebrateFinale()" class="glow-btn mt-8 px-10 py-4 text-white font-semibold rounded-full tracking-wide text-lg animate-stagger">
+          Celebrate!
+        </button>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Step Navigation & Core Logic Scripts -->
+  <script>
+    let currentStep = 1;
+    const totalSteps = 5;
+
+    // Initialize Progress Bar & Show First Step
+    updateProgressBar();
+    gsap.fromTo("#step-1", 
+      { opacity: 0, scale: 0.95, y: 15 }, 
+      { opacity: 1, scale: 1, y: 0, duration: 1, ease: "power3.out", pointerEvents: "auto" }
+    );
+
+    function updateProgressBar() {
+      const percentage = (currentStep / totalSteps) * 100;
+      gsap.to("#progress-bar", { width: `${percentage}%`, duration: 0.6, ease: "power2.out" });
+    }
+
+    function nextStep() {
+      if (currentStep >= totalSteps) return;
+
+      const currentCard = document.getElementById(`step-${currentStep}`);
+      const nextCard = document.getElementById(`step-${currentStep + 1}`);
+
+      currentCard.style.pointerEvents = "none";
+
+      const tl = gsap.timeline({
+        onComplete: () => {
+          currentCard.classList.add('hidden');
+          nextCard.style.pointerEvents = "auto";
+          currentStep++;
+          updateProgressBar();
+        }
+      });
+
+      // Animate current card out
+      tl.to(currentCard, {
+        opacity: 0,
+        scale: 0.95,
+        y: -15,
+        duration: 0.5,
+        ease: "power2.inOut"
+      });
+
+      // Reveal next card
+      tl.set(nextCard, { className: "step-card w-full glass-card rounded-3xl p-8 md:p-12 text-center flex flex-col items-center justify-between opacity-0 absolute" });
+      tl.to(nextCard, {
+        opacity: 1,
+        scale: 1,
+        y: 0,
+        duration: 0.6,
+        ease: "power3.out"
+      }, "-=0.15");
+
+      // Stagger internal elements of next card
+      const staggers = nextCard.querySelectorAll('.animate-stagger');
+      if (staggers.length > 0) {
+        tl.fromTo(staggers, 
+          { opacity: 0, y: 10 },
+          { opacity: 1, y: 0, stagger: 0.1, duration: 0.4, ease: "power2.out" },
+          "-=0.4"
+        );
+      }
+    }
+
+    // Polaroid Parallax Tilt Effect
+    const polaroid = document.getElementById('polaroid');
+    if (polaroid) {
+      const wrapper = polaroid.parentElement;
+      wrapper.addEventListener('mousemove', (e) => {
+        const rect = wrapper.getBoundingClientRect();
+        const x = e.clientX - rect.left - rect.width / 2;
+        const y = e.clientY - rect.top - rect.height / 2;
+        
+        // Calculate tilt angles (limit range)
+        const tiltX = (y / (rect.height / 2)) * -12;
+        const tiltY = (x / (rect.width / 2)) * 12;
+
+        gsap.to(polaroid, {
+          rotateX: tiltX,
+          rotateY: tiltY,
+          scale: 1.05,
+          duration: 0.3,
+          ease: "power2.out"
+        });
+      });
+
+      wrapper.addEventListener('mouseleave', () => {
+        gsap.to(polaroid, {
+          rotateX: 0,
+          rotateY: 0,
+          rotate: -3,
+          scale: 1,
+          duration: 0.5,
+          ease: "power2.out"
+        });
+      });
+    }
+
+    // Grand Finale Sequence
+    let isSwirling = false;
+    
+    function celebrateFinale() {
+      const button = document.getElementById('celebrate-btn');
+      const finalMsg = document.getElementById('final-message');
+
+      // Disable and fade button out
+      button.disabled = true;
+      gsap.to(button, { opacity: 0, scale: 0.9, y: 10, duration: 0.5, onComplete: () => {
+        button.classList.add('hidden');
+      }});
+
+      // Show final customized message
+      finalMsg.classList.remove('hidden');
+      gsap.fromTo(finalMsg, 
+        { opacity: 0, y: 15, scale: 0.95 },
+        { opacity: 1, y: 0, scale: 1, duration: 1, delay: 0.4, ease: "power3.out" }
+      );
+
+      // Trigger Three.js swirl interaction
+      isSwirling = true;
+
+      // Confetti Explosion
+      const duration = 5000;
+      const end = Date.now() + duration;
+
+      // Bottom corner bursts
+      confetti({
+        particleCount: 120,
+        spread: 80,
+        origin: { x: 0.1, y: 0.85 }
+      });
+      confetti({
+        particleCount: 120,
+        spread: 80,
+        origin: { x: 0.9, y: 0.85 }
+      });
+
+      // Continuous gentle falling rain (Standard + Emojis)
+      (function frame() {
+        // Standard bursts from sides
+        confetti({
+          particleCount: 2,
+          angle: 60,
+          spread: 55,
+          origin: { x: 0, y: 0.7 }
+        });
+        confetti({
+          particleCount: 2,
+          angle: 120,
+          spread: 55,
+          origin: { x: 1, y: 0.7 }
+        });
+
+        // Occasional floating Emoji hearts/sparkles
+        if (Math.random() < 0.2) {
+          const emojis = ['❤️', '💖', '✨'];
+          confetti({
+            particleCount: 1,
+            scalar: 2.2,
+            shapes: ['emoji'],
+            shapeOptions: {
+              emoji: {
+                value: emojis[Math.floor(Math.random() * emojis.length)]
+              }
+            },
+            origin: { x: Math.random(), y: Math.random() - 0.2 }
+          });
+        }
+
+        if (Date.now() < end) {
+          requestAnimationFrame(frame);
+        }
+      }());
+    }
+  </script>
+
+  <!-- Three.js Setup Script -->
+  <script>
+    const canvas = document.getElementById('canvas3d');
+    const scene = new THREE.Scene();
+    
+    // Set up transparent background to let aurora gradient show through
+    const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.z = 15;
+
+    // Lights
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+    scene.add(ambientLight);
+
+    const dirLight1 = new THREE.DirectionalLight(0xffffff, 1.2);
+    dirLight1.position.set(5, 10, 7);
+    scene.add(dirLight1);
+
+    const dirLight2 = new THREE.DirectionalLight(0xff2e93, 0.8);
+    dirLight2.position.set(-5, -5, 5);
+    scene.add(dirLight2);
+
+    // Create 3D Extruded Heart Shape
+    function createHeartGeometry() {
+      const shape = new THREE.Shape();
+      const x = 0, y = 0;
+      shape.moveTo( x + 5, y + 5 );
+      shape.bezierCurveTo( x + 5, y + 5, x + 4, y, x, y );
+      shape.bezierCurveTo( x - 3, y, x - 3, y + 3.5, x - 3, y + 3.5 );
+      shape.bezierCurveTo( x - 3, y + 5.5, x - 1.5, y + 7.7, x + 5, y + 9.5 );
+      shape.bezierCurveTo( x + 11.5, y + 7.7, x + 13, y + 5.5, x + 13, y + 3.5 );
+      shape.bezierCurveTo( x + 13, y + 3.5, x + 13, y, x + 9, y );
+      shape.bezierCurveTo( x + 7, y, x + 5, y + 5, x + 5, y + 5 );
+
+      const extrudeSettings = {
+        depth: 1.5,
+        bevelEnabled: true,
+        bevelSegments: 4,
+        steps: 2,
+        bevelSize: 0.6,
+        bevelThickness: 0.8
+      };
+
+      const geo = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+      geo.center(); // Center local alignment coordinates
+      return geo;
+    }
+
+    const heartGeo = createHeartGeometry();
+
+    // Red/Pink Gradient palette materials
+    const materials = [
+      new THREE.MeshPhysicalMaterial({ color: 0xff3b60, roughness: 0.15, metalness: 0.1, clearcoat: 0.9, clearcoatRoughness: 0.1, transparent: true, opacity: 0.85 }),
+      new THREE.MeshPhysicalMaterial({ color: 0xff1f5a, roughness: 0.2, metalness: 0.05, clearcoat: 0.8, clearcoatRoughness: 0.1, transparent: true, opacity: 0.8 }),
+      new THREE.MeshPhysicalMaterial({ color: 0xff6b8b, roughness: 0.1, metalness: 0.2, clearcoat: 1.0, clearcoatRoughness: 0.05, transparent: true, opacity: 0.85 }),
+      new THREE.MeshPhysicalMaterial({ color: 0xd81b60, roughness: 0.3, metalness: 0.1, clearcoat: 0.7, clearcoatRoughness: 0.15, transparent: true, opacity: 0.9 })
+    ];
+
+    const hearts = [];
+    const heartCount = 22;
+
+    // Build Heart Instances
+    for (let i = 0; i < heartCount; i++) {
+      const mat = materials[Math.floor(Math.random() * materials.length)].clone();
+      const mesh = new THREE.Mesh(heartGeo, mat);
+      
+      const scale = 0.05 + Math.random() * 0.1;
+      mesh.scale.set(scale, scale, scale);
+
+      // Define standard range for layout positioning
+      mesh.userData = {
+        speedY: 0.01 + Math.random() * 0.015,
+        speedX: 0.005 + Math.random() * 0.008,
+        amplitudeX: 0.3 + Math.random() * 1.2,
+        phaseX: Math.random() * Math.PI * 2,
+        rotSpeed: (Math.random() - 0.5) * 0.015,
+        baseX: (Math.random() - 0.5) * 16,
+        baseY: (Math.random() - 0.5) * 12,
+        baseZ: -2 - Math.random() * 6
+      };
+
+      mesh.position.set(mesh.userData.baseX, mesh.userData.baseY, mesh.userData.baseZ);
+      mesh.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0);
+
+      scene.add(mesh);
+      hearts.push(mesh);
+    }
+
+    // Animation Loop
+    const clock = new THREE.Clock();
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const time = clock.getElapsedTime();
+
+      hearts.forEach(heart => {
+        if (!isSwirling) {
+          // Subtle drifting state
+          heart.userData.baseY += heart.userData.speedY;
+          if (heart.userData.baseY > 8) {
+            heart.userData.baseY = -8;
+          }
+
+          heart.position.y = heart.userData.baseY;
+          heart.position.x = heart.userData.baseX + Math.sin(time + heart.userData.phaseX) * heart.userData.amplitudeX;
+          
+          heart.rotation.y += heart.userData.rotSpeed;
+          heart.rotation.x += heart.userData.rotSpeed * 0.5;
+        } else {
+          // Swirling Upwards & Fading (Finale sequence)
+          heart.position.y += 0.08;
+          heart.position.x += Math.sin(time * 6 + heart.userData.phaseX) * 0.08;
+          heart.rotation.y += 0.05;
+          heart.rotation.x += 0.03;
+          
+          if (heart.material.opacity > 0) {
+            heart.material.opacity -= 0.005;
+          }
+        }
+      });
+
+      renderer.render(scene, camera);
+    }
+
+    // Adapt Viewport on Resizing
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    animate();
+  </script>
+</body>
+</html>
